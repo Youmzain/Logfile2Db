@@ -1,5 +1,38 @@
+# Autor: Harald Schmitz-Becker
+# Liest eine Datei ein und erzeugt eine Zeile im Table per_file für die Datei und eine Zeile in perf_row für jede Zeile in der Datei.
+# Aufruf:
+# python Logffile2Db.py -f "<Pfad>" -t CUST1412353
+# Beispiel: python Logfile2Db.py -f "C:\Tickets\CUST1414766 verlangsamtes System\CUST1412353 Aufruf des DRG WP extrem langsam\DRGWP Aufruf KHVM langsam.log" -t CUST1412353
+
+
+import argparse
 import oracledb
 from pathlib import Path
+
+
+# Parameter
+
+parser = argparse.ArgumentParser(
+    description="Importiert eine Logdatei zeilenweise in die Oracle-DB"
+)
+
+parser.add_argument(
+    "-t", "--ticket",
+    dest="customer_ticket_id",
+    required=True,
+    help="Customer Ticket ID (z.B. CUST1412353)"
+)
+
+parser.add_argument(
+    "-f", "--file",
+    dest="file_path",
+    required=True,
+    help="Pfad zur Logdatei"
+)
+
+args = parser.parse_args()
+
+
 
 # Verbindung
 conn = oracledb.connect(
@@ -10,8 +43,11 @@ conn = oracledb.connect(
 
 # File
 
-file_path = Path(r"C:\Tickets\CUST1414766 verlangsamtes System\CUST1412353 Aufruf des DRG WP extrem langsam\DRGWP Aufruf KHVM langsam.log")
-customer_ticket_id = "CUST1412353"
+#file_path = Path(r"C:\Tickets\CUST1414766 verlangsamtes System\CUST1412353 Aufruf des DRG WP extrem langsam\DRGWP Aufruf KHVM langsam.log")
+#customer_ticket_id = "CUST1412353"
+
+file_path = Path(args.file_path)
+customer_ticket_id = args.customer_ticket_id
 
 sql_file = """
 INSERT INTO perf_file (
