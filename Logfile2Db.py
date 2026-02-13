@@ -3,7 +3,7 @@
 # Aufruf:
 # python Logffile2Db.py -f "<Pfad>" -t CUST1412353
 # Beispiel: python Logfile2Db.py -f "C:\Tickets\CUST1414766 verlangsamtes System\CUST1412353 Aufruf des DRG WP extrem langsam\DRGWP Aufruf KHVM langsam.log" -t CUST1412353
-
+# Wenn venv nicht aktiviert werden kann:  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 import argparse
 import oracledb
@@ -17,34 +17,27 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    "-t", "--ticket",
+    "-t",
+    "--ticket",
     dest="customer_ticket_id",
     required=True,
-    help="Customer Ticket ID (z.B. CUST1412353)"
+    help="Customer Ticket ID (z.B. CUST1412353)",
 )
 
 parser.add_argument(
-    "-f", "--file",
-    dest="file_path",
-    required=True,
-    help="Pfad zur Logdatei"
+    "-f", "--file", dest="file_path", required=True, help="Pfad zur Logdatei"
 )
 
 args = parser.parse_args()
 
 
-
 # Verbindung
-conn = oracledb.connect(
-    user="harald",
-    password="klo+tkx",
-    dsn="localhost/FREEPDB1"
-)
+conn = oracledb.connect(user="harald", password="klo+tkx", dsn="localhost/FREEPDB1")
 
 # File
 
-#file_path = Path(r"C:\Tickets\CUST1414766 verlangsamtes System\CUST1412353 Aufruf des DRG WP extrem langsam\DRGWP Aufruf KHVM langsam.log")
-#customer_ticket_id = "CUST1412353"
+# file_path = Path(r"C:\Tickets\CUST1414766 verlangsamtes System\CUST1412353 Aufruf des DRG WP extrem langsam\DRGWP Aufruf KHVM langsam.log")
+# customer_ticket_id = "CUST1412353"
 
 file_path = Path(args.file_path)
 customer_ticket_id = args.customer_ticket_id
@@ -66,9 +59,9 @@ new_id = conn.cursor().var(oracledb.NUMBER)
 with conn.cursor() as cur:
     cur.execute(
         sql_file,
-        customer_ticket_id = customer_ticket_id,
-        file_path = str(file_path),
-        new_id = new_id
+        customer_ticket_id=customer_ticket_id,
+        file_path=str(file_path),
+        new_id=new_id,
     )
 
 perf_file_id = int(new_id.getvalue()[0])
@@ -79,12 +72,14 @@ sql_row = """
 INSERT INTO perf_row (
         perf_file_id
     ,   row_number
-    ,   file_row
+    ,   row_type
+    ,   lower_row
     )
     VALUES (
         :perf_file_id
     ,   :row_number
-    ,   :file_row
+    ,   :row_type
+    ,   :lower_row
     )
 """
 
@@ -93,19 +88,34 @@ row_number = 1
 
 with file_path.open(encoding="utf-8", errors="replace") as f:
     for line in f:
-        file_row = line.rstrip("\n")
-        if not file_row:
-            file_row = " "
-        rows.append({
-            "perf_file_id": perf_file_id,
-            "row_number": row_number,
-            "file_row": file_row
-        })
+
+        lower_row = line.rstrip("\r\n")
+        if not lower_row:
+            lower_row = " "
+        lower_row = lower_row.lower()
+
+        row_type = lower_row[0] if len(lower_row) > 1 and lower_row[1] == ":" else " "
+        rows.append(
+            {
+                "perf_file_id": perf_file_id,
+                "row_number": row_number,
+                "row_type": row_type,
+                "lower_row": lower_row,
+            }
+        )
         row_number += 1
 
 
-# Batch-Insert → schnell!
+# Batch-Insert
 with conn.cursor() as cur:
+
+    cur.setinputsizes(
+        perf_file_id=oracledb.NUMBER,
+        row_number=oracledb.NUMBER,
+        row_type=oracledb.STRING,
+        lower_row=oracledb.CLOB,
+    )
+
     cur.executemany(sql_row, rows)
 
 
@@ -113,3 +123,5 @@ with conn.cursor() as cur:
 
 conn.commit()
 conn.close()
+
+print(f"Created Id: {perf_file_id}")

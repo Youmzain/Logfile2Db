@@ -1,0 +1,15 @@
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+Verhindert diesen Fehler: 
+
+
+PS C:\Users\harald.schmitz-becke\hsb-tools_2025-12-30\Logfile2Db_Solution> .\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1 : Die Datei
+"C:\Users\harald.schmitz-becke\hsb-tools_2025-12-30\Logfile2Db_Solution\.venv\Scripts\Activate.ps1" kann nicht geladen
+werden, da die Ausführung von Skripts auf diesem System deaktiviert ist. Weitere Informationen finden Sie unter
+"about_Execution_Policies" (https:/go.microsoft.com/fwlink/?LinkID=135170).
+In Zeile:1 Zeichen:1
++ .\.venv\Scripts\Activate.ps1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : Sicherheitsfehler: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess

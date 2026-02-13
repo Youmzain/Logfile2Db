@@ -1,0 +1,13 @@
+Dienst OracleServiceFree auf "Automatisch(verzögert)"
+
+PS C:\Users\harald.schmitz-becke\temp\sqlpus> sqlplus / as sysdba
+
+SQL*Plus: Release 23.26.0.0.0 - Production on Mi Jan 14 15:37:02 2026
+Version 23.26.0.0.0
+
+Copyright (c) 1982, 2025, Oracle.  All rights reserved.
+
+Bei einer nicht hochgefahrenen Instanz angemeldet.
+
+SQL> startup;
+ORACLE-Instanz hochgefahren.
