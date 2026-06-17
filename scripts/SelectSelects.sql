@@ -1,3 +1,40 @@
+select * from perf_file order by id desc;
+/*
+Selektiert alle Select-Statements, Gruppiert nach Files und den ersten 100 Zeichen
+*/
+
+with x as (
+    select      
+                pr.perf_file_id                                 perf_file_id
+            ,   pr.id                                           perf_row_id 
+            ,   pr.lower_row                                    lower_row
+            ,   dbms_lob.instr(pr.lower_row, 'select ', 1, 1)   pos_select
+            ,   dbms_lob.instr(pr.lower_row, ' from ', 1, 1)    pos_from
+            ,   pr.row_number                                   row_number
+    from    perf_row pr
+    where       pr.perf_file_id in (322)
+            and dbms_lob.getlength(pr.lower_row) > 1
+--            and pr.row_number between 1328 and 178326
+),
+x2 as (
+    select  
+                x.perf_file_id                                  perf_file_id
+            ,   dbms_lob.substr(lower_row, 100, pos_select)     stmt
+            ,   x.row_number                                    row_number
+    from    x
+    where   x.pos_select > 0 and x.pos_from > x.pos_select
+)
+select      
+            x2.perf_file_id                                     perf_file_id
+        ,   x2.stmt                                             stmt
+        ,   count(*)                                            num_rows
+        ,   sum(count(*)) over(partition by x2.perf_file_id)    overall
+        ,   min(x2.row_number)                                  min_row_number
+from                                x2
+group by    x2.perf_file_id, x2.stmt
+order by    count(*) desc, x2.perf_file_id, x2.stmt
+--order by    min(x2.row_number), x2.stmt, x2.perf_file_id, count(*) desc
+;
 
 /*
 Selektiert alle Select-Statements, Gruppiert nach den ersten 100 Zeichen
@@ -11,7 +48,7 @@ with x as (
     from    perf_row pr
     where       pr.perf_file_id = :perf_file_id
             and dbms_lob.getlength(pr.lower_row) > 1
-            and pr.row_number between 1328 and 178326
+--            and pr.row_number between 1328 and 178326
 ),
 x2 as (
     select  dbms_lob.substr(lower_row, 100, pos_select)         stmt
@@ -23,7 +60,7 @@ select      stmt                                                stmt
         ,   sum(count(*)) over()                                overall
 from    x2
 group by stmt
-order by count(*)
+order by count(*) desc
 ;
 
 
