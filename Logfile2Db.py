@@ -69,14 +69,11 @@ perf_file_id = int(new_id.getvalue()[0])
 
 # Rows
 
-fetch_time_re = re.compile(r'fetched in (\d+) ms')
-
-def extract_fetch_time_ms(line: str) -> int | None:
-    match = fetch_time_re.search(line)
+def extract_int(line: str, pattern:re.Pattern[str]) -> int | None:
+    match = pattern.search(line)
     if match: 
         return int(match.group(1))
     return None
-   
 
 sql_row = """
 INSERT INTO perf_row (
@@ -84,14 +81,18 @@ INSERT INTO perf_row (
     ,   row_number
     ,   row_type
     ,   lower_row
+    ,   rows_fetched
     ,   fetched_in_ms
+    ,   fetched_in_parts
     )
     VALUES (
         :perf_file_id
     ,   :row_number
     ,   :row_type
     ,   :lower_row
+    ,   :rows_fetched
     ,   :fetched_in_ms
+    ,   :fetched_in_parts
     )
 """
 
@@ -107,14 +108,15 @@ with file_path.open(encoding="utf-8", errors="replace") as f:
         lower_row = lower_row.lower()
 
         row_type = lower_row[0] if len(lower_row) > 1 and lower_row[1] == ":" else " "
-        fetched_in_ms = extract_fetch_time_ms(line)
         rows.append(
             {
                 "perf_file_id": perf_file_id,
                 "row_number": row_number,
                 "row_type": row_type,
                 "lower_row": lower_row,
-                "fetched_in_ms": fetched_in_ms,
+                "rows_fetched": extract_int(lower_row, re.compile(r' (\d+) rows fetched')),
+                "fetched_in_ms": extract_int(lower_row, re.compile(r'fetched in (\d+) ms')),
+                "fetched_in_parts": extract_int(lower_row, re.compile(r'fetched in (\d+) parts')),
             }
         )
         row_number += 1
@@ -128,7 +130,9 @@ with conn.cursor() as cur:
         row_number=oracledb.NUMBER,
         row_type=oracledb.STRING,
         lower_row=oracledb.CLOB,
+        rows_fetched=oracledb.NUMBER,
         fetched_in_ms=oracledb.NUMBER,
+        fetched_in_parts=oracledb.NUMBER,
     )
 
     cur.executemany(sql_row, rows)
