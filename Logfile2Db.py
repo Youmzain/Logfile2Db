@@ -7,6 +7,7 @@
 
 import argparse
 import oracledb
+import re
 from pathlib import Path
 
 
@@ -68,18 +69,29 @@ perf_file_id = int(new_id.getvalue()[0])
 
 # Rows
 
+fetch_time_re = re.compile(r'fetched in (\d+) ms')
+
+def extract_fetch_time_ms(line: str) -> int | None:
+    match = fetch_time_re.search(line)
+    if match: 
+        return int(match.group(1))
+    return None
+   
+
 sql_row = """
 INSERT INTO perf_row (
         perf_file_id
     ,   row_number
     ,   row_type
     ,   lower_row
+    ,   fetched_in_ms
     )
     VALUES (
         :perf_file_id
     ,   :row_number
     ,   :row_type
     ,   :lower_row
+    ,   :fetched_in_ms
     )
 """
 
@@ -95,12 +107,14 @@ with file_path.open(encoding="utf-8", errors="replace") as f:
         lower_row = lower_row.lower()
 
         row_type = lower_row[0] if len(lower_row) > 1 and lower_row[1] == ":" else " "
+        fetched_in_ms = extract_fetch_time_ms(line)
         rows.append(
             {
                 "perf_file_id": perf_file_id,
                 "row_number": row_number,
                 "row_type": row_type,
                 "lower_row": lower_row,
+                "fetched_in_ms": fetched_in_ms,
             }
         )
         row_number += 1
@@ -114,6 +128,7 @@ with conn.cursor() as cur:
         row_number=oracledb.NUMBER,
         row_type=oracledb.STRING,
         lower_row=oracledb.CLOB,
+        fetched_in_ms=oracledb.NUMBER,
     )
 
     cur.executemany(sql_row, rows)

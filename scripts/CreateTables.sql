@@ -15,8 +15,10 @@ CREATE TABLE perf_row (
     id                  NUMBER GENERATED ALWAYS AS IDENTITY
                         CONSTRAINT pk_perf_row PRIMARY KEY,
     perf_file_id        NUMBER NOT NULL,
+	row_type			VARCHAR2(1 CHAR)
     row_number          NUMBER NOT NULL,
     file_row            CLOB NOT NULL,
+	fetched_in_ms		NUMBER,
     CONSTRAINT fk_perf_row__perf_file
         FOREIGN KEY (perf_file_id)
         REFERENCES perf_file (id)
