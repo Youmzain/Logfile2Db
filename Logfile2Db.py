@@ -12,18 +12,11 @@
 # Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 import argparse
-import re
+from datetime import datetime
+import oracledb
 import os
 from pathlib import Path
-
-import oracledb
-
-
-# Regex-Konstanten
-
-ROWS_FETCHED_RE = re.compile(r" (\d+) rows fetched")
-FETCHED_IN_MS_RE = re.compile(r"fetched in (\d+) ms")
-FETCHED_IN_PARTS_RE = re.compile(r"fetched in (\d+) parts")
+import re
 
 
 # DB-Konstanten
@@ -35,6 +28,16 @@ FETCHED_IN_PARTS_RE = re.compile(r"fetched in (\d+) parts")
 DB_USER = os.environ["LOGDB_USER"]
 DB_PASSWORD = os.environ["LOGDB_PASSWORD"]
 DB_DSN = os.environ["LOGDB_DSN"]
+
+
+# Regex-Konstanten
+
+ROWS_FETCHED_RE = re.compile(r" (\d+) rows fetched")
+FETCHED_IN_MS_RE = re.compile(r"fetched in (\d+) ms")
+FETCHED_IN_PARTS_RE = re.compile(r"fetched in (\d+) parts")
+# Log_Timestamp z.B. 2026-06-17 07:57:32,503 aus:
+# C: 62 / 292,375 (= ) - 2026-06-17 07:57:32,503 - (M: 858 
+LOG_TIMESTAMP_RE = re.compile(r"\(=.*?\)\s*-\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})")
 
 # SQL-Konstanten
 
@@ -55,6 +58,7 @@ INSERT INTO perf_row (
         perf_file_id
     ,   row_number
     ,   row_type
+    ,   log_timestamp
     ,   lower_row
     ,   rows_fetched
     ,   fetched_in_ms
@@ -64,6 +68,7 @@ INSERT INTO perf_row (
         :perf_file_id
     ,   :row_number
     ,   :row_type
+    ,   :log_timestamp
     ,   :lower_row
     ,   :rows_fetched
     ,   :fetched_in_ms
@@ -108,6 +113,13 @@ def get_row_type(lower_row: str) -> str:
     return " "
 
 
+def extract_datetime(line: str, pattern: re.Pattern[str]) -> datetime | None:
+    match = pattern.search(line)
+    if not match:
+        return None
+    return datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S,%f")
+
+
 def insert_perf_file(
     conn: oracledb.Connection,
     customer_ticket_id: str,
@@ -147,6 +159,7 @@ def build_rows(file_path: Path, perf_file_id: int) -> list[dict]:
                     "rows_fetched": extract_int(lower_row, ROWS_FETCHED_RE),
                     "fetched_in_ms": extract_int(lower_row, FETCHED_IN_MS_RE),
                     "fetched_in_parts": extract_int(lower_row, FETCHED_IN_PARTS_RE),
+                    "log_timestamp": extract_datetime(lower_row, LOG_TIMESTAMP_RE),
                 }
             )
 
@@ -159,6 +172,7 @@ def insert_perf_rows(conn: oracledb.Connection, rows: list[dict]) -> None:
             perf_file_id=oracledb.NUMBER,
             row_number=oracledb.NUMBER,
             row_type=oracledb.STRING,
+            log_timestamp=oracledb.DATETIME,
             lower_row=oracledb.CLOB,
             rows_fetched=oracledb.NUMBER,
             fetched_in_ms=oracledb.NUMBER,

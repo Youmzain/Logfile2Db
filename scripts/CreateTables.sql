@@ -18,6 +18,7 @@ CREATE TABLE perf_row (
 	row_type			VARCHAR2(1 CHAR)
     row_number          NUMBER NOT NULL,
     file_row            CLOB NOT NULL,
+    log_timestamp       TIMESTAMP(3),   --z.B. 2026-06-17 07:57:32,503 aus: 'C: 62 / 292,375 (= ) - 2026-06-17 07:57:32,503 - (M: 858...' 
 	rows_fetched		NUMBER,			-- 10 	aus '10 rows fetched in 5 ms' oder 50 aus '50 rows fetched in 2 parts'
 	fetched_in_ms		NUMBER,			-- 5 	aus '10 rows fetched in 5 ms'
 	fetched_in_parts	NUMBER, 		-- 2	aus '50 rows fetched in 2 parts'
