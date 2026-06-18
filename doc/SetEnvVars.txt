@@ -1,0 +1,12 @@
+PowerShell 7.6.3
+[Constrained Language AUDIT Mode : No Restrictions]
+PS C:\Users\harald.schmitz-becke> setx LOGDB_PASSWORD ""
+
+ERFOLGREICH: Angegebener Wert wurde gespeichert.
+PS C:\Users\harald.schmitz-becke> setx LOGDB_USER "harald"
+
+ERFOLGREICH: Angegebener Wert wurde gespeichert.
+PS C:\Users\harald.schmitz-becke> setx LOGDB_DSN "localhost/FREEPDB1"
+
+ERFOLGREICH: Angegebener Wert wurde gespeichert.
+PS C:\Users\harald.schmitz-becke>
