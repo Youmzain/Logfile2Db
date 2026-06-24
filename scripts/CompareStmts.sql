@@ -21,30 +21,16 @@ with x as (
 ),          
 x2 as (
     select      
-                x.perf_file_id                                                      perf_file_id
-            ,   x.perf_row_id                                                       perf_row_id 
-            ,   x.row_number                                                        row_number
-            ,   x.lower_row                                                         lower_row
-            ,   dbms_lob.substr(lower_row, 100, 
-                  coalesce(
-                      case
-                          when x.pos_select > 0 and x.pos_from > x.pos_select
-                          then x.pos_select
-                      end,
-                      case
-                          when x.pos_delete > 0 and x.pos_from > x.pos_delete
-                          then x.pos_delete
-                      end,
-                      case
-                          when x.pos_update > 0 and x.pos_set > x.pos_update
-                          then x.pos_update
-                      end,
-                      case
-                          when x.pos_insert > 0 and x.pos_into > x.pos_insert
-                          then x.pos_insert
-                      end
-                  ))                                                                stmt
-    from    x
+                x.perf_file_id                                                                              perf_file_id
+            ,   x.perf_row_id                                                                               perf_row_id 
+            ,   x.row_number                                                                                row_number
+            ,   x.lower_row                                                                                 lower_row
+            ,   dbms_lob.substr(lower_row, 100, coalesce(
+                      case when x.pos_select > 0 and x.pos_from > x.pos_select then x.pos_select end,
+                      case when x.pos_delete > 0 and x.pos_from > x.pos_delete then x.pos_delete end,
+                      case when x.pos_update > 0 and x.pos_set > x.pos_update  then x.pos_update end,
+                      case when x.pos_insert > 0 and x.pos_into > x.pos_insert then x.pos_insert end))      stmt        
+        from    x
     where       (x.pos_select > 0 and x.pos_from    > x.pos_select)
             or  (x.pos_delete > 0 and x.pos_from    > x.pos_delete)
             or  (x.pos_update > 0 and x.pos_set     > x.pos_update)
