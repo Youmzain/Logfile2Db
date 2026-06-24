@@ -150,6 +150,15 @@ def build_rows(file_path: Path, perf_file_id: int) -> list[dict]:
 
             lower_row = lower_row.lower()
 
+            log_timestamp = extract_datetime(lower_row, LOG_TIMESTAMP_RE)
+
+            # if log_timestamp is not None:
+            #     print(
+            #         f"row={row_number} "
+            #         f"ts={log_timestamp} "
+            #         f"microsecond={log_timestamp.microsecond}"
+            #     )
+
             rows.append(
                 {
                     "perf_file_id": perf_file_id,
@@ -172,7 +181,7 @@ def insert_perf_rows(conn: oracledb.Connection, rows: list[dict]) -> None:
             perf_file_id=oracledb.NUMBER,
             row_number=oracledb.NUMBER,
             row_type=oracledb.STRING,
-            log_timestamp=oracledb.DATETIME,
+            log_timestamp=oracledb.DB_TYPE_TIMESTAMP,
             lower_row=oracledb.CLOB,
             rows_fetched=oracledb.NUMBER,
             fetched_in_ms=oracledb.NUMBER,
